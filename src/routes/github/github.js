@@ -6,7 +6,7 @@ import fs from "fs";
 
 const router = express.Router();
 
-const WORKSPACE = "/workspace"; // inside Docker
+const WORKSPACE = process.env.WORKSPACE || "/workspace"; // inside Docker
 
 router.post("/clone-repo", async (req, res) => {
   const { repoUrl, projectName, branch } = req.body;
