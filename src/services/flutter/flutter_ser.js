@@ -3,10 +3,8 @@ import path from "path";
 import fs from "fs";
 import simpleGit from "simple-git";
 import { Octokit } from "@octokit/rest";
+import { FLUTTER_CMD, ANDROID_HOME, WORKSPACE } from "../../config/config.js";
 
-const FLUTTER_CMD = process.env.FLUTTER_BIN || "flutter";
-const ANDROID_HOME = process.env.ANDROID_HOME || "/usr/lib/android-sdk";
-const WORKSPACE = process.env.WORKSPACE || "/workspace";
 
 function makeEnvForSdk() {
   const env = { ...process.env };
@@ -53,7 +51,7 @@ export class FlutterManager {
     this.workspace = workspace;
     this.github = new Octokit({ auth: githubToken });
   }
-
+   
   async createApp(appName, parentPath = this.workspace, githubOpts = null) {
     if (!appName) throw new Error("appName required");
 

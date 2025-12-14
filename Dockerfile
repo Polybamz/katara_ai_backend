@@ -1,116 +1,17 @@
-FROM ubuntu:22.04
+ FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
+# ENV DEBIAN_FRONTEND=noninteractive
+# ENV ANDROID_HOME=/usr/lib/android-sdk
+# ENV WORKSPACE=/workspace
+# ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# -----------------------------
-# 1. Install core dependencies
-# -----------------------------
-RUN apt update && apt install -y \
-  curl \
-  git \
-  unzip \
-  zip \
-  python3 \
-  openjdk-17-jdk \
-  build-essential \
-  wget \
-  xz-utils \
-  ca-certificates
-
-# -----------------------------
-# 2. Install Node.js
-# -----------------------------
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt install -y nodejs
-
-# create a non-root user for runtime
-RUN useradd -m -s /bin/bash app
-
-# -----------------------------
-# 3. Install Android SDK (commandline tools + packages)
-# -----------------------------
-RUN mkdir -p /usr/lib/android-sdk/cmdline-tools
-WORKDIR /tmp
-
-RUN wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip && \
-    unzip /tmp/cmdline-tools.zip -d /usr/lib/android-sdk/cmdline-tools && \
-    rm /tmp/cmdline-tools.zip
-
-ENV ANDROID_HOME=/usr/lib/android-sdk
-ENV PATH="${ANDROID_HOME}/cmdline-tools/bin:${ANDROID_HOME}/platform-tools:${PATH}"
-
-# Accept licenses and install required SDK components
-RUN yes | sdkmanager --licenses || true
-
-RUN sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "emulator" "system-images;android-34;google_apis;x86_64" || true
-
-# -----------------------------
-# 4. Install Flutter
-# -----------------------------
-WORKDIR /usr/local
-RUN wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.0-stable.tar.xz && \
-    tar xf flutter_linux_3.19.0-stable.tar.xz -C /usr/local/ && \
-    rm flutter_linux_3.19.0-stable.tar.xz
-
-ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
-
-# Pre-cache Flutter artifacts (non-interactive)
-RUN flutter precache --no-analytics || true
-
-# Run doctor to ensure binaries are in place (continue on non-zero exit)
-RUN flutter doctor -v || true
-
-# -----------------------------
-# 5. Install Gradle
-# -----------------------------
-RUN apt install -y gradle
-
-# -----------------------------
-# 6. Install React Native + Expo (global)
-# -----------------------------
-RUN npm install -g react-native-cli expo-cli eas-cli --unsafe-perm
-
-# -----------------------------
-# 7. Setup workspace + Express server
-# -----------------------------
-# Create workspace and make it writable by the runtime user
-RUN mkdir -p /workspace && chown -R app:app /workspace
-ENV WORKSPACE=/workspace
-
-# ensure /app exists and owned by app
-WORKDIR /app
-RUN mkdir -p /app && chown -R app:app /app
-
-# set git user to avoid commit failure
-RUN git config --global user.email "ci@katara" && git config --global user.name "katara-ci"
-
-# Copy project files and install dependencies as non-root user
-COPY package*.json ./
-RUN chown app:app package*.json
-
-USER app
-RUN npm install --no-audit --no-fund
-
-# copy rest of source as non-root user
-COPY --chown=app:app . .
-
-# switch back to root only if you need privileged operations later
-USER app
-
-EXPOSE 4000
-
-CMD ["node", "src/server.js"]
-
-
-
-
-
-# FROM ubuntu:22.04
+# ARG NODE_ENV=production
 
 # # -----------------------------
-# # 1. Install core dependencies
+# # 1. Install core dependencies (use apt-get to avoid apt CLI warning)
 # # -----------------------------
-# RUN apt update && apt install -y \
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#   ca-certificates \
 #   curl \
 #   git \
 #   unzip \
@@ -119,78 +20,118 @@ CMD ["node", "src/server.js"]
 #   openjdk-17-jdk \
 #   build-essential \
 #   wget \
-#   xz-utils
+#   xz-utils \
+#   gnupg2 \
+#   && rm -rf /var/lib/apt/lists/*
 
 # # -----------------------------
-# # 2. Install Node.js
+# # 2. Install Node.js 18
 # # -----------------------------
 # RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-#     apt install -y nodejs
+#     apt-get update && apt-get install -y --no-install-recommends nodejs && \
+#     rm -rf /var/lib/apt/lists/*
+
+# # create a non-root user for runtime
+# RUN useradd -m -s /bin/bash app
 
 # # -----------------------------
-# # 3. Install Flutter
+# # 3. Install Android SDK commandline tools
 # # -----------------------------
-# RUN wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.0-stable.tar.xz && \
-#     tar xf flutter_linux_3.19.0-stable.tar.xz -C /usr/local/
+# # ...existing code...
+# RUN mkdir -p /usr/lib/android-sdk/cmdline-tools /tmp/cmdline && \
+#     wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip && \
+#     unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline && \
+#     rm /tmp/cmdline-tools.zip && \
+#     mkdir -p /usr/lib/android-sdk/cmdline-tools/latest && \
+#     # move extracted content into the "latest" folder; handle both possible zip layouts
+#     if [ -d /tmp/cmdline/cmdline-tools ]; then \
+#       mv /tmp/cmdline/cmdline-tools/* /usr/lib/android-sdk/cmdline-tools/latest/; \
+#     else \
+#       mv /tmp/cmdline/* /usr/lib/android-sdk/cmdline-tools/latest/; \
+#     fi && \
+#     rm -rf /tmp/cmdline
+# # ...existing code...
+
+# # Ensure sdkmanager is callable via explicit path (also uses ANDROID_HOME)
+# ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
+
+# # Accept licenses and install key SDK components (tolerate failures)
+# RUN yes | /usr/lib/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_HOME} --licenses || true
+# RUN /usr/lib/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_HOME} "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+
+# # -----------------------------
+# # 4. Install Flutter
+# # -----------------------------
+# # -----------------------------
+# # 4. Install Flutter (robust download with retries + validation)
+# # -----------------------------
+# WORKDIR /usr/local
+# ARG FLUTTER_VERSION=3.19.0-stable
+# ENV FLUTTER_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}.tar.xz"
+
+# RUN set -eux; \
+#     apt-get update && apt-get install -y --no-install-recommends wget xz-utils || true; \
+#     echo "Downloading Flutter from ${FLUTTER_URL}"; \
+#     rm -f /tmp/flutter.tar.xz; \
+#     for i in 1 2 3 4 5; do \
+#       echo "Attempt $i to download flutter..."; \
+#       wget --tries=3 --timeout=30 --retry-connrefused -O /tmp/flutter.tar.xz "${FLUTTER_URL}" && break || echo "wget attempt $i failed, retrying..."; \
+#       sleep $((i * 5)); \
+#     done; \
+#     if [ ! -s /tmp/flutter.tar.xz ]; then \
+#       echo "ERROR: flutter archive not downloaded or empty: /tmp/flutter.tar.xz"; \
+#       ls -l /tmp || true; \
+#       exit 1; \
+#     fi; \
+#     echo "Downloaded flutter archive, size:"; ls -lh /tmp/flutter.tar.xz; \
+#     # try extracting, provide debug info on failure
+#     mkdir -p /usr/local/flutter_tmp; \
+#     if ! tar -xJf /tmp/flutter.tar.xz -C /usr/local; then \
+#       echo "ERROR: tar extraction failed for /tmp/flutter.tar.xz"; \
+#       echo "File info:"; file /tmp/flutter.tar.xz || true; ls -l /tmp/flutter.tar.xz || true; \
+#       exit 1; \
+#     fi; \
+#     rm -f /tmp/flutter.tar.xz; \
+#     echo "Flutter installed to /usr/local/flutter"
 
 # ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# RUN flutter doctor
-
-# RUN flutter pub get \
-#  flutter_bloc\
-#  bloc\
-#  http
-
-# # ...existing code...
-# # create workspace and make it writable by non-root user
-# RUN mkdir -p /workspace && chown -R node:node /workspace
-# ENV WORKSPACE=/workspace
-
-# # set git user to avoid commit failure
-# RUN git config --global user.email "ci@katara" && git config --global user.name "katara-ci"
-# # ...existing code...
-# # -----------------------------
-# # 4. Install Android SDK
-# # -----------------------------
-# RUN mkdir -p /usr/lib/android-sdk/cmdline-tools
-
-# RUN wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
-#     unzip commandlinetools-linux-9477386_latest.zip -d /usr/lib/android-sdk/cmdline-tools && \
-#     rm commandlinetools-linux-9477386_latest.zip
-
-# ENV ANDROID_HOME=/usr/lib/android-sdk
-# ENV PATH="${ANDROID_HOME}/cmdline-tools/bin:${ANDROID_HOME}/platform-tools:${PATH}"
-
-# RUN yes | sdkmanager --licenses
-
-# RUN sdkmanager \
-#     "platform-tools" \
-#     "platforms;android-34" \
-#     "build-tools;34.0.0" \
-#     "emulator" \
-#     "system-images;android-34;google_apis;x86_64"
+# # Pre-cache Flutter artifacts (may be slow)
+# RUN /usr/local/flutter/bin/flutter precache --no-analytics || true
+# RUN /usr/local/flutter/bin/flutter doctor -v || true
 
 # # -----------------------------
 # # 5. Install Gradle
 # # -----------------------------
-# RUN apt install -y gradle
+# RUN apt-get update && apt-get install -y --no-install-recommends gradle && rm -rf /var/lib/apt/lists/*
 
 # # -----------------------------
-# # 6. Install React Native + Expo
+# # 6. Optional global npm tools
 # # -----------------------------
-# RUN npm install -g react-native-cli expo-cli eas-cli
+# RUN npm install -g react-native-cli expo-cli eas-cli --unsafe-perm || true
 
 # # -----------------------------
-# # 7. Setup workspace + Express server
+# # 7. Setup workspace + app dir
 # # -----------------------------
+# RUN mkdir -p /workspace /app && chown -R app:app /workspace /app
+# RUN git config --global user.email "ci@katara" && git config --global user.name "katara-ci"
+
 # WORKDIR /app
-
 # COPY package*.json ./
-# RUN npm install
+# RUN chown app:app package*.json
 
-# COPY . .
+# USER app
 
-# EXPOSE 4000
+# RUN npm install --no-audit --no-fund
 
+# RUN if [ "$NODE_ENV" = "developement" ]; \
+#     then npm install; \
+#     else npm install --only=production; \
+#     fi
+# # copy rest of source as non-root user
+# COPY --chown=app:app . .
+
+# EXPOSE 5000
+
+# USER app
 # CMD ["node", "src/server.js"]

@@ -1,0 +1,24 @@
+# version: "3.9"
+
+# services:
+#   katara_backend:
+#     container_name: katara_backend
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5000:5000"
+#     environment:
+#       - NODE_ENV=production
+#       - ANDROID_HOME=/usr/lib/android-sdk
+#     volumes:
+#       - ./:/app
+#       - android_sdk:/usr/lib/android-sdk
+#       - flutter_cache:/usr/local/flutter
+#     working_dir: /app
+#     command: ["node", "src/server.js"]
+#     restart: unless-stopped
+
+# volumes:
+#   android_sdk:
+#   flutter_cache:
