@@ -1,0 +1,109 @@
+##FLUTTER folder structure
+
+
+lib/
+│
+├── core/
+│   ├── error/
+│   │   ├── exceptions.dart
+│   │   └── failures.dart
+│   │
+│   ├── network/
+│   │   ├── api_client.dart
+│   │   └── network_info.dart
+│   │
+│   ├── usecases/
+│   │   └── usecase.dart
+│   │
+│   ├── utils/
+│   │   └── constants.dart
+│   │
+│   └── theme/
+│       └── app_theme.dart
+│
+├── features/
+│   └── auth/
+│       ├── data/
+│       │   ├── datasources/
+│       │   │   ├── auth_remote_datasource.dart
+│       │   │   └── auth_local_datasource.dart
+│       │   │
+│       │   ├── models/
+│       │   │   └── user_model.dart
+│       │   │
+│       │   └── repositories/
+│       │       └── auth_repository_impl.dart
+│       │
+│       ├── domain/
+│       │   ├── entities/
+│       │   │   └── user.dart
+│       │   │
+│       │   ├── repositories/
+│       │   │   └── auth_repository.dart
+│       │   │
+│       │   └── usecases/
+│       │       └── login_usecase.dart
+│       │
+│       └── presentation/
+│           ├── bloc/
+│           │   ├── auth_bloc.dart
+│           │   ├── auth_event.dart
+│           │   └── auth_state.dart
+│           │
+│           ├── pages/
+│           │   └── login_page.dart
+│           │
+│           └── widgets/
+│               └── login_form.dart
+│
+├── injection_container.dart
+├── app.dart
+└── main.dart
+
+
+##REACT Native folder structure
+
+
+src/
+│
+├── app/
+│   ├── store.ts
+│   └── rootReducer.ts
+│
+├── features/
+│   └── auth/
+│       ├── api/
+│       │   └── authApi.ts
+│       │
+│       ├── components/
+│       │   └── LoginForm.tsx
+│       │
+│       ├── screens/
+│       │   └── LoginScreen.tsx
+│       │
+│       ├── slice/
+│       │   └── authSlice.ts
+│       │
+│       ├── types/
+│       │   └── auth.types.ts
+│       │
+│       └── hooks/
+│           └── useAuth.ts
+│
+├── navigation/
+│   └── AppNavigator.tsx
+│
+├── services/
+│   └── httpClient.ts
+│
+├── hooks/
+│   └── useAppDispatch.ts
+│
+├── styles/
+│   └── tailwind.config.js
+│
+├── utils/
+│   └── constants.ts
+│
+└── App.tsx
+
