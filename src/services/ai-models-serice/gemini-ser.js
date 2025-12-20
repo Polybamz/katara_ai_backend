@@ -5,9 +5,12 @@ import {
     createPartFromUri,
 } from "@google/genai";
 
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const geminiClient = new GoogleGenAI({
-    apiKey: process.env.GOOGLE_GENAI_API_KEY || "AIzaSyCIwP1_EKKoSMBxZoelA4BD4xCn2lZJlzs",
+    apiKey: process.env.GOOGLE_GENAI_API_KEY,
 });
 
 
@@ -84,7 +87,7 @@ const createGeminiChat = async (messages = []) => {
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         temperature: 0.3,
-        maxOutputTokens: 100,
+        // maxOutputTokens: 10000000,
         topK: 10,
         topP: 0.5,
        
