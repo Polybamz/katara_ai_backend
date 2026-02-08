@@ -2,9 +2,11 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import simpleGit from "simple-git";
-import { Octokit } from "@octokit/rest";
-import { FLUTTER_CMD, ANDROID_HOME, WORKSPACE } from "../../config/config.js";
-
+//import { Octokit } from "@octokit/rest";
+// import { FLUTTER_CMD,  WORKSPACE } from "../../config/config.js";
+ const ANDROID_HOME = process.env.ANDROID_HOME || "/usr/lib/android-sdk"
+ const FLUTTER_CMD = process.env.FLUTTER_BIN || "flutter"
+ const WORKSPACE = process.env.WORKSPACE || "/workspace"
 
 function makeEnvForSdk() {
   const env = { ...process.env };
@@ -49,14 +51,16 @@ function runCmd(cmd, args = [], opts = {}) {
 export class FlutterManager {
   constructor(workspace = WORKSPACE, githubToken) {
     this.workspace = workspace;
-    this.github = new Octokit({ auth: githubToken });
+    this.github = ''//new Octokit({ auth: githubToken });
   }
    
-  async createApp(appName, parentPath = this.workspace, githubOpts = null) {
-    if (!appName) throw new Error("appName required");
+ static async createApp(appName, parentPath = this.workspace, githubOpts = null) {
+  console.log(appName, parentPath,  FLUTTER_CMD,  ANDROID_HOME)
+  try {
+     if (!appName) throw  Error("appName:// required");
 
     const targetPath = path.join(parentPath, appName);
-    if (fs.existsSync(targetPath)) throw new Error("target exists");
+    if (fs.existsSync(targetPath)) throw  Error("target exists");
 
     // 1️⃣ Create the Flutter app
     const result = await runCmd(FLUTTER_CMD, ["create", appName], { cwd: parentPath });
@@ -78,13 +82,18 @@ export class FlutterManager {
       await git.commit("Initial Flutter app commit");
       await git.addRemote("origin", `https://github.com/${owner}/${repoName || appName}.git`);
       await git.push("origin", "master");
+      await git.clone(`https://github.com/${owner}/${repoName || appName}.git`,)
     }
 
     return result;
+  } catch (e){
+    console.error('kkkkkkkkkkkkkkkkkkk',e)
+  }
+   
   }
 
   async pubGet(projectPath) {
-    if (!projectPath) throw new Error("projectPath required");
+    if (!projectPath) throw  Error("projectPath required");
     return await runCmd(FLUTTER_CMD, ["pub", "get"], { cwd: projectPath });
   }
 
@@ -110,3 +119,6 @@ export class FlutterManager {
   }
 }
  
+
+console.log('=================================================')
+console.log(FlutterManager.createApp( WORKSPACE, ''))
