@@ -1,9 +1,15 @@
 import githubRouter from "./routes/github/github.js";
 import modelroute from "./routes/ai-route/route.js";
 import express from 'express';
-const cors = require('cors');
+import cors from 'cors';
 
 // This allows ALL origins (good for testing, narrow it down for production)
+
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cors()); 
 
 app.use(cors({
@@ -11,11 +17,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 app.get("/", (req, res) => {
     res.send('Running katara Backend');
 })
