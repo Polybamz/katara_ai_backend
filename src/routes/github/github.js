@@ -82,41 +82,44 @@ router.post("/clone-repo", async (req, res) => {
 // ------------------------------------------
 // 📄 2. READ ANY FILE FROM THE CLONED PROJECT
 // ------------------------------------------
-router.get("/file", async (req, res) => {
-  const { projectName, filePath } = req.body;
 
-  if (!projectName || !filePath) {
-    return res.status(400).json({
-      error: "projectName and filePath are required"
-    });
-  }
+router.get("/file", GithubController.getFileContent);
+// router.get("/file", 
+//   async (req, res) => {
+//   const { projectName, filePath } = req.body;
 
-  const fullPath = path.join(WORKSPACE, projectName, filePath);
+//   if (!projectName || !filePath) {
+//     return res.status(400).json({
+//       error: "projectName and filePath are required"
+//     });
+//   }
 
-  // Check if file exists
-  if (!fs.existsSync(fullPath)) {
-    return res.status(404).json({
-      error: "File not found"
-    });
-  }
+//   const fullPath = path.join(WORKSPACE, projectName, filePath);
 
-  try {
-    const fileContent = fs.readFileSync(fullPath, "utf8");
+//   // Check if file exists
+//   if (!fs.existsSync(fullPath)) {
+//     return res.status(404).json({
+//       error: "File not found"
+//     });
+//   }
 
-    return res.json({
-      success: true,
-      projectName,
-      filePath,
-      content: fileContent
-    });
+//   try {
+//     const fileContent = fs.readFileSync(fullPath, "utf8");
 
-  } catch (error) {
-    console.error("File read error:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+//     return res.json({
+//       success: true,
+//       projectName,
+//       filePath,
+//       content: fileContent
+//     });
+
+//   } catch (error) {
+//     console.error("File read error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       error: error.message
+//     });
+//   }
+// });
 
 export default router;

@@ -48,7 +48,7 @@ class GithubController {
       .filter(item => !skip.includes(item.name))
       .map(item => {
         const fullPath = path.join(dir, item.name);
-        const relativePath = path.relative('/workspaces', fullPath).replace(/\\/g, "/");
+        const relativePath = path.relative('/workspace', fullPath).replace(/\\/g, "/");
 
         if (item.isDirectory()) {
           const children = depth < maxDepth ? GithubController.buildTree(fullPath, depth + 1, maxDepth, skip) : [];
@@ -74,6 +74,41 @@ class GithubController {
     throw new Error("Failed to build file tree: " + e.message);
   }
 };
+
+// get file by path
+static getFileContent = async (req, res) => {
+  const { filePath } = req.body;
+ 
+  try {
+    const content = await GithubService.getFileContent(filePath);
+    res.status(200).json({
+      success: true,
+      content
+    })
+  } catch (e) {
+    res.status(400).json({
+      success: false,
+      error: e.message
+    })
+  }}
+  // update file content
+  static updateFileContent = async (req, res) => {
+    const { filePath, content } = req.body;
+    const fullPath = path.join('/workspaces', filePath);
+    try {
+      fs.writeFileSync(fullPath, content, "utf8");
+      res.status(200).json({
+        success: true,
+        message: "File updated successfully"
+      })
+    } catch (e) {
+      res.status(400).json({
+        success: false,
+        error: e.message
+      })
+    }
+  }
+  
 }
 
 export default GithubController

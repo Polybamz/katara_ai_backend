@@ -105,7 +105,16 @@ console.log("Project name replaced");
     throw e;
   }
 }
-
+// get file content from working en by file path
+static async getFileContent(filePath) {
+  try {
+    const fullPath = path.join( filePath);
+    const content = fs.readFileSync(fullPath, "utf-8");
+    return content;
+  } catch (e) {
+    throw e
+  }
+}
 
   // ─────────────────────────────────────────────
   // 2. REPLACE TEMPLATE IDENTIFIERS
