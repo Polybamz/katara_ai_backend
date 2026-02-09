@@ -2,7 +2,7 @@
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ANDROID_HOME=/usr/lib/android-sdk
-ENV WORKSPACE=/workspace
+ENV WORKSPACE=/workspaces
 ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
 ARG NODE_ENV=production

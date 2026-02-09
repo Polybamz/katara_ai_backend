@@ -73,7 +73,6 @@ static async createAppFromTemplate(type, appName) {
     const authedTemplate = token
       ? template.replace("https://", `https://${token}@`)
       : template;
-    console.log("Authed template URL:", authedTemplate);
     // 1. Clone template
     await simpleGit({
       env: {
@@ -81,27 +80,22 @@ static async createAppFromTemplate(type, appName) {
         GIT_TERMINAL_PROMPT: "0"
       }
     }).clone(authedTemplate, target, ["--branch", "main"]);
-  console.log("Clone completed");
     // 2. Remove template git history
     const gitDir = path.join(target, ".git");
     if (fs.existsSync(gitDir)) {
       fs.rmSync(gitDir, { recursive: true, force: true });
     }
-console.log("Removed .git directory if it existed");
     // 3. Fresh git
     const git = simpleGit(target);
     await git.init();
-console.log("Initialized new git repository");
     // 4. Rename package / identifiers
     await this.replaceProjectName(target, appName);
-console.log("Project name replaced");
     return {
       projectId,
       workingDir: target,
     };
 
   } catch (e) {
-    console.error("Template creation failed:", e);
     throw e;
   }
 }

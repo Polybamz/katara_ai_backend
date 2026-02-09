@@ -8,7 +8,7 @@ import simpleGit from "simple-git";
 
 const ANDROID_HOME =  process.env.ANDROID_HOME || "/usr/lib/android-sdk"
 const FLUTTER_CMD =  process.env.FLUTTER_BIN || "flutter"
-const WORKSPACE = process.env.WORKSPACE || "/workspace"
+const WORKSPACE = process.env.WORKSPACE || "/workspaces"
 function makeEnvForSdk() {
   const env = { ...process.env };
   env.PATH = [
@@ -156,7 +156,7 @@ function runCmd(cmd, args = [], opts = {}) {
 // }
 
 class FilingClass {
-  static BASE_DIR = process.env.WORKSPACE_DIR || process.cwd();
+  static BASE_DIR = process.env.WORKSPACE_DIR || 'workspaces';
 
   static resolveSafe(working_directory, target) {
     const base = path.resolve(working_directory || this.BASE_DIR);

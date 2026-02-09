@@ -1,7 +1,7 @@
 
 import { FilingClass } from "./files_dir_function.js";
 
- const workingDir = process.env.WORKING_DIRECTORY || process.env.WORKSPACE || "todo";
+ const workingDir = process.env.WORKING_DIRECTORY || process.env.WORKSPACE || "workspaces";
 
 function coerceToString(v) {
   if (v == null) return "";

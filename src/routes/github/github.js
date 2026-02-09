@@ -5,7 +5,7 @@ import fs from "fs";
 import GithubController from "../../controller/github_controller/github.js";
 
 const router = express.Router();
-const WORKSPACE = process.env.WORKSPACE || "/workspace"; // Folder inside container/server
+const WORKSPACE = process.env.WORKSPACE || "/workspaces"; // Folder inside container/server
 
 //
 // ------------------------------------------
@@ -15,6 +15,15 @@ const WORKSPACE = process.env.WORKSPACE || "/workspace"; // Folder inside contai
 
 
 router.post('/clone-template', GithubController.cloneTemplate );
+router.get('/file-tree/:dir', async(req,res)=>{
+  const {dir} = req.params
+  try {
+    const tree = GithubController.buildTree(dir)
+    res.send(200).json({tree})
+  } catch(e){
+    res.send(400).json({e})
+  }
+})
 
 router.post("/clone-repo", async (req, res) => {
   const { repoUrl, projectName, branch } = req.body;

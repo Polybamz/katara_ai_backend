@@ -6,7 +6,7 @@ import simpleGit from "simple-git";
 // import { FLUTTER_CMD,  WORKSPACE } from "../../config/config.js";
  const ANDROID_HOME = process.env.ANDROID_HOME || "/usr/lib/android-sdk"
  const FLUTTER_CMD = process.env.FLUTTER_BIN || "flutter"
- const WORKSPACE = process.env.WORKSPACE || "/workspace"
+ const WORKSPACE = process.env.WORKSPACE || "/workspaces"
 
 function makeEnvForSdk() {
   const env = { ...process.env };
