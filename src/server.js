@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-    res.sendFile('../index.html');
+    res.sendFile('Running katara Backend');
 })
 
 app.use("/api/v1/github", (req, res, next) => {
