@@ -13,11 +13,11 @@ class GithubController {
       console.log("Building file tree for:", result.projectId)
       // const tree = GithubController.buildTree(result.workingDir)
       // console.log("File tree built successfully for:", result.projectId)
-      const tree = GithubController.buildTree(result.workingDir);
+      //const tree = GithubController.buildTree(result.workingDir);
 
       res.status(200).json({
         result,
-        tree
+       // tree
 
       })
     } catch (e) {
@@ -77,8 +77,8 @@ class GithubController {
 
 // get file by path
 static getFileContent = async (req, res) => {
-  const { filePath } = req.body;
- 
+  const  filePath  = req.query.filePath;
+ console.log(filePath)
   try {
     const content = await GithubService.getFileContent(filePath);
     res.status(200).json({

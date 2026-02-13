@@ -68,6 +68,16 @@ export async function callFunction(functionCall, verbose = false, workingDirecto
         result = { error: "run_python_file not implemented" };
         break;
       }
+      case "delete_file": {
+        const file_path = coerceToString(args.file_path ?? args.path ?? args.file ?? "");
+        result = FilingClass.delete_file(workingDirectory, file_path);
+        break;
+      }
+      case "delete_directory": {
+        const directory = coerceToString(args.directory ?? args.path ?? ".");
+        result = FilingClass.delete_directory(workingDirectory, directory);
+        break;
+      }
 
       default: {
         result = { error: `Unknown function ${functionCall.name}` };

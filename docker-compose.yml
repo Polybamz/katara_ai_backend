@@ -8,16 +8,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    # environment:
-    #   - NODE_ENV=production
-    #   - ANDROID_HOME=/usr/lib/android-sdk
+    environment:
+      - NODE_ENV=production
+      - ANDROID_HOME=/usr/lib/android-sdk
     volumes:
       - ./:/app
       - android_sdk:/usr/lib/android-sdk
       - flutter_cache:/usr/local/flutter
-    # working_dir: /app
-    # command: ["node", "src/server.js"]
-    # restart: unless-stopped
+    working_dir: /app
+    command: ["node", "src/server.js"]
+    restart: unless-stopped
 
 volumes:
   android_sdk:

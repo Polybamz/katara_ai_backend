@@ -17,55 +17,70 @@ const token = process.env.GITHUB_TOKEN;
 
 class GithubService {
 
+  // generate 18 character id
+  static generateId = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let id = "";
+    for (let i = 0; i < 25; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return id;
+  }
+
   // ─────────────────────────────────────────────
   // 1. CREATE PROJECT FROM TEMPLATE
   // ─────────────────────────────────────────────
-//   static async createAppFromTemplate(type, appName) {
 
-//     if (!TEMPLATES[type]) {
-//       throw new Error(`Unsupported template type: ${type}`);
-//     }
+// static async createAppFromTemplate(type, appName) {
 
-//     const template = TEMPLATES[type];
-//     const projectId = `${appName}-${Date.now()}`;
-
-//     const target = path.join(WORKSPACE, projectId);
-//  console.log("Cloning template:", template, "to", target)
-//     try {
-//       // 1. Clone template
-//       await simpleGit().clone(template, target, ["--branch", 'main']);
-
-//       // 2. Remove template git history
-//       const gitDir = path.join(target, ".git");
-//       if (fs.existsSync(gitDir)) {
-//         fs.rmSync(gitDir, { recursive: true, force: true });
-//       }
-
-//       // 3. Fresh git
-//       const git = simpleGit(target);
-//       await git.init();
-
-//       // 4. Rename package / identifiers
-//       await this.replaceProjectName(target, appName);
-
-//       return {
-//         projectId,
-//         workingDir: target,
-//       };
-
-//     } catch (e) {
-//       console.error("Template creation failed:", e);
-//       throw e;
-//     }
+//   if (!TEMPLATES[type]) {
+//     throw new Error(`Unsupported template type: ${type}`);
 //   }
+//   const id = this.generateId();
+//   const template = TEMPLATES[type];
+//   const projectId = `${appName}-${id}`;
+//   const target = path.join(WORKSPACE, projectId);
+//   try {
+    
+//     console.log("Using token:", token ? "Yes" : "No");
+//     const authedTemplate = token
+//       ? template.replace("https://", `https://${token}@`)
+//       : template;
+//     // 1. Clone template
+//     await simpleGit({
+//       env: {
+//         ...process.env,
+//         GIT_TERMINAL_PROMPT: "0"
+//       }
+//     }).clone(authedTemplate, target, ["--branch", "main"]);
+//     // 2. Remove template git history
+//     const gitDir = path.join(target, ".git");
+//     if (fs.existsSync(gitDir)) {
+//       fs.rmSync(gitDir, { recursive: true, force: true });
+//     }
+//     // 3. Fresh git
+//     const git = simpleGit(target);
+//     await git.init();
+//     // 4. Rename package / identifiers
+//     await this.replaceProjectName(target, appName);
+//     return {
+//       projectId,
+//       workingDir: target,
+//     };
+
+//   } catch (e) {
+//     throw e;
+//   }
+// }
+// ...existing code...
 static async createAppFromTemplate(type, appName) {
 
   if (!TEMPLATES[type]) {
     throw new Error(`Unsupported template type: ${type}`);
   }
-
+  const id = this.generateId();
   const template = TEMPLATES[type];
-  const projectId = `${appName}-${Date.now()}`;
+  const projectId = `${appName}-${id}`;
   const target = path.join(WORKSPACE, projectId);
   try {
     
@@ -79,7 +94,7 @@ static async createAppFromTemplate(type, appName) {
         ...process.env,
         GIT_TERMINAL_PROMPT: "0"
       }
-    }).clone(authedTemplate, target, ["--branch", "main"]);
+    }).clone(authedTemplate, target, ["--branch", "main", "--depth", "1"]);
     // 2. Remove template git history
     const gitDir = path.join(target, ".git");
     if (fs.existsSync(gitDir)) {
@@ -90,15 +105,56 @@ static async createAppFromTemplate(type, appName) {
     await git.init();
     // 4. Rename package / identifiers
     await this.replaceProjectName(target, appName);
+
+    // Commit initial project contents on main
+    console.log("Committing initial project...");
+    await git.addConfig("user.name", process.env.GIT_USER_NAME || "katara-bot");
+    await git.addConfig("user.email", process.env.GIT_USER_EMAIL || "katara@local");
+
+    await git.add(".");
+    try { await git.checkoutLocalBranch("main"); } catch (_) {}
+    await git.commit("Initial commit from Katara template");
+
+    // If token provided, create a new GitHub repo and push the code to it
+    let repoInfo = null;
+    if (token) {
+      console.log("Creating GitHub repo and pushing code...");
+      try {
+        // create GitHub repo
+        repoInfo = await this.createGithubRepo(projectId, token);
+         console.log("Repo created:", repoInfo.html_url);
+        // prepare authed remote url for push
+        const remoteUrl = repoInfo.clone_url; // https://github.com/owner/repo.git
+        const authedRemote = remoteUrl.replace("https://", `https://${token}@`);
+
+        // ensure no existing origin, then add remote and push
+        try { await git.removeRemote("origin"); } catch (_) {
+          console.log("No existing remote to remove, proceeding...");
+        }
+        await git.addRemote("origin", authedRemote);
+        try { await git.branch(["-M", "main"]); } catch (_) {
+          console.log("Branch rename failed (maybe already main), proceeding...");
+        }
+        await git.push(["-u", "origin", "main"]);
+        console.log("Code pushed to GitHub repo.");
+      } catch (e) {
+        console.error("Failed to create or push to GitHub repo:", e);
+        repoInfo = null;
+      }
+    }
+
     return {
       projectId,
+      appName,
       workingDir: target,
+      repo: repoInfo ? { html_url: repoInfo.html_url, clone_url: repoInfo.clone_url } : null,
     };
 
   } catch (e) {
     throw e;
   }
 }
+// ...existing code...
 // get file content from working en by file path
 static async getFileContent(filePath) {
   try {
@@ -124,7 +180,7 @@ static async getFileContent(filePath) {
 
       const updated = content
         .replace(/template_app/g, name)
-        .replace(/com.example.template/g, `com.katara.${name}`);
+        .replace(/com.example.flutter-template/g, `com.kataraBuild.${name}`);
 
       fs.writeFileSync(file, updated);
     }
@@ -133,7 +189,7 @@ static async getFileContent(filePath) {
   // ─────────────────────────────────────────────
   // 3. PUBLISH TO GITHUB
   // ─────────────────────────────────────────────
-  static async publishToGithub(projectId, repoUrl, token = GITHUB_TOKEN) {
+  static async publishToGithub(projectId, repoUrl) {
 
     const projectPath = path.join(WORKSPACE, projectId);
 
@@ -248,6 +304,19 @@ static async getFileContent(filePath) {
       throw e;
         }
     
+  }
+
+  // pull from github to local (future)
+  static async pullFromGithub(projectId, repoUrl) {
+    const projectPath = path.join(WORKSPACE, projectId);
+    try {
+      const git = simpleGit(projectPath);
+      await git.pull(repoUrl, "main");
+      return { success: true };
+    } catch (e) {
+      console.error("Pull failed:", e);
+      throw e;
+    }
   }
 }
 

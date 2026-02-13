@@ -7,24 +7,22 @@ import GithubController from "../../controller/github_controller/github.js";
 const router = express.Router();
 const WORKSPACE = process.env.WORKSPACE || "/workspaces"; // Folder inside container/server
 
-//
-// ------------------------------------------
+
 // 🚀 1. CLONE REPOSITORY (like local machine)
-// ------------------------------------------
-
-
-
 router.post('/clone-template', GithubController.cloneTemplate );
-router.get('/file-tree/:dir', async(req,res)=>{
-  const {dir} = req.params
+
+// get file tree
+router.get('/file-tree', async(req,res)=>{
+  const dir = req.query.dir
   try {
     const tree = GithubController.buildTree(dir)
-    res.send(200).json({tree})
+    res.status(200).json({tree})
   } catch(e){
-    res.send(400).json({e})
+    res.status(400).json({e})
   }
 })
 
+// clone a new repo
 router.post("/clone-repo", async (req, res) => {
   const { repoUrl, projectName, branch } = req.body;
 
@@ -87,48 +85,9 @@ router.post("/clone-repo", async (req, res) => {
   }
 });
 
-
-// ------------------------------------------
 // 📄 2. READ ANY FILE FROM THE CLONED PROJECT
-// ------------------------------------------
-
 router.get("/file", GithubController.getFileContent);
-// router.get("/file", 
-//   async (req, res) => {
-//   const { projectName, filePath } = req.body;
 
-//   if (!projectName || !filePath) {
-//     return res.status(400).json({
-//       error: "projectName and filePath are required"
-//     });
-//   }
 
-//   const fullPath = path.join(WORKSPACE, projectName, filePath);
-
-//   // Check if file exists
-//   if (!fs.existsSync(fullPath)) {
-//     return res.status(404).json({
-//       error: "File not found"
-//     });
-//   }
-
-//   try {
-//     const fileContent = fs.readFileSync(fullPath, "utf8");
-
-//     return res.json({
-//       success: true,
-//       projectName,
-//       filePath,
-//       content: fileContent
-//     });
-
-//   } catch (error) {
-//     console.error("File read error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message
-//     });
-//   }
-// });
 
 export default router;

@@ -12,6 +12,8 @@ import { LLMSchemas } from "../../functions/files_dir_function.js";
 
 dotenv.config();
 
+
+
 async function createGeminiChat(prompt, verboseFlag = false, workingDirectory ) {
   const geminiApiKey = process.env.GOOGLE_GENAI_API_KEY;
 
@@ -55,6 +57,8 @@ All paths you provide should be relative to the working directory. You do not ne
           LLMSchemas.schema_get_file_info,
           LLMSchemas.schema_get_file_content,
           LLMSchemas.schema_write_file,
+          LLMSchemas.schema_delete_directory,
+          LLMSchemas.schema_delete_file,
         ],
       },
     ],
