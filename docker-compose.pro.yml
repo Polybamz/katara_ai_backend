@@ -6,11 +6,26 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=production
-      - ANDROID_HOME=/usr/lib/android-sdk
+      NODE_ENV: "production"
+      ANDROID_HOME: "/usr/lib/android-sdk"
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      GIT_USER_NAME: "${GIT_USER_NAME}"
+      GIT_USER_EMAIL: "${GIT_USER_EMAIL}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
+    volumes:
+      - ./:/app
+      - android_sdk:/usr/lib/android-sdk
+      - flutter_cache:/usr/local/flutter
+      - ./workspaces:/workspaces
     working_dir: /app
     command: node src/server.js
     restart: unless-stopped
 
-
+volumes:
+  android_sdk:
+  flutter_cache:

@@ -113,7 +113,7 @@ RUN npm install -g react-native-cli expo-cli eas-cli --unsafe-perm || true
 # -----------------------------
 # 7. Setup workspace + app dir
 # -----------------------------
-RUN mkdir -p /workspace /app && chown -R app:app /workspace /app
+RUN mkdir -p /workspaces /app && chown -R app:app /workspaces /app
 RUN git config --global user.email "ci@katara" && git config --global user.name "katara-ci"
 
 WORKDIR /app
@@ -124,7 +124,7 @@ USER app
 
 RUN npm install --no-audit --no-fund
 
-RUN if [ "$NODE_ENV" = "developement" ]; \
+RUN if [ "$NODE_ENV" = "development" ]; \
     then npm install; \
     else npm install --only=production; \
     fi

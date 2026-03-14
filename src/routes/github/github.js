@@ -18,7 +18,7 @@ router.get('/file-tree', async(req,res)=>{
     const tree = GithubController.buildTree(dir)
     res.status(200).json({tree})
   } catch(e){
-    res.status(400).json({e})
+    res.status(400).json({message:e.message})
   }
 })
 

@@ -1,7 +1,15 @@
 import githubRouter from "./routes/github/github.js";
 import modelroute from "./routes/ai-route/route.js";
+import attachGeminiWebsocket from "./websockets/gemini_ws.js";
+import http from "http";
+
 import express from 'express';
 import cors from 'cors';
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const PORT = process.env.PORT || 5000;
 
 // This allows ALL origins (good for testing, narrow it down for production)
 
@@ -27,7 +35,8 @@ app.use("/api/v1/github", (req, res, next) => {
 }, githubRouter);
 app.use("/api/v1/ai", modelroute);
 
-app.listen(5000, () => {
-  console.log(`Serer running on port 5000`);
-});
+const server = http.createServer(app);
+attachGeminiWebsocket(server, { path: "/ws/gemini" });
+
+server.listen(PORT,"0.0.0.0");
 

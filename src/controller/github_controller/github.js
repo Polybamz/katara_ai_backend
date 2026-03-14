@@ -21,7 +21,7 @@ class GithubController {
 
       })
     } catch (e) {
-      res.status(400).json({ failed: true, error: e, MESSAGE: 'Failed to clone template' })
+      res.status(404).json({ failed: true, error: e, message: 'Failed to clone template' })
     }
   }
 
@@ -44,11 +44,11 @@ class GithubController {
   try {
     const items = fs.readdirSync(dir, { withFileTypes: true });
 
-    return items
+    const tree = items
       .filter(item => !skip.includes(item.name))
       .map(item => {
         const fullPath = path.join(dir, item.name);
-        const relativePath = path.relative('/workspace', fullPath).replace(/\\/g, "/");
+        const relativePath = path.relative('/workspaces', fullPath).replace(/\\/g, "/");
 
         if (item.isDirectory()) {
           const children = depth < maxDepth ? GithubController.buildTree(fullPath, depth + 1, maxDepth, skip) : [];
@@ -69,6 +69,7 @@ class GithubController {
           };
         }
       });
+      return tree;
   } catch (e) {
     console.error("Failed to build file tree for", dir, e);
     throw new Error("Failed to build file tree: " + e.message);

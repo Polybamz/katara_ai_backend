@@ -1,3 +1,27 @@
+# version: "3.9"
+
+# services:
+#   katara_backend:
+#     container_name: katara_backend
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5000:5000"
+#     environment:
+#       - NODE_ENV=production
+#       - ANDROID_HOME=/usr/lib/android-sdk
+#     volumes:
+#       - ./:/app
+#       - android_sdk:/usr/lib/android-sdk
+#       - flutter_cache:/usr/local/flutter
+#     working_dir: /app
+#     command: ["node", "src/server.js"]
+#     restart: unless-stopped
+
+# volumes:
+#   android_sdk:
+#   flutter_cache:
 version: "3.9"
 
 services:
@@ -8,13 +32,21 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    env_file:
+      - .env                       # <-- inject vars from .env into the container
     environment:
-      - NODE_ENV=production
-      - ANDROID_HOME=/usr/lib/android-sdk
+      NODE_ENV: "production"
+      ANDROID_HOME: "/usr/lib/android-sdk"
+      # WORKSPACE: "${WORKSPACE}"     # optional: use host .env values
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      GIT_USER_NAME: "${GIT_USER_NAME}"
+      GIT_USER_EMAIL: "${GIT_USER_EMAIL}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
     volumes:
       - ./:/app
       - android_sdk:/usr/lib/android-sdk
       - flutter_cache:/usr/local/flutter
+      - ./workspaces:/workspaces   # ensure workspace is mounted & persistent
     working_dir: /app
     command: ["node", "src/server.js"]
     restart: unless-stopped

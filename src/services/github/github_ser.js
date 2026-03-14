@@ -80,8 +80,9 @@ static async createAppFromTemplate(type, appName) {
   }
   const id = this.generateId();
   const template = TEMPLATES[type];
-  const projectId = `${appName}-${id}`;
-  const target = path.join(WORKSPACE, projectId);
+  const projectId = `${id}`;
+  const target = path.join(WORKSPACE, projectId, appName);
+  console.log(target)
   try {
     
     console.log("Using token:", token ? "Yes" : "No");
@@ -110,7 +111,6 @@ static async createAppFromTemplate(type, appName) {
     console.log("Committing initial project...");
     await git.addConfig("user.name", process.env.GIT_USER_NAME || "katara-bot");
     await git.addConfig("user.email", process.env.GIT_USER_EMAIL || "katara@local");
-
     await git.add(".");
     try { await git.checkoutLocalBranch("main"); } catch (_) {}
     await git.commit("Initial commit from Katara template");
@@ -151,6 +151,7 @@ static async createAppFromTemplate(type, appName) {
     };
 
   } catch (e) {
+    console.log(e)
     throw e;
   }
 }

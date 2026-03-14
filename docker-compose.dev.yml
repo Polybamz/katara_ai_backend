@@ -6,15 +6,22 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # ports:
-    #   - "5000:5000"
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=de
+      - NODE_ENV=development
       - ANDROID_HOME=/usr/lib/android-sdk
     volumes:
       - ./:/app
       - android_sdk:/usr/lib/android-sdk
       - flutter_cache:/usr/local/flutter
+      - ./workspaces:/workspaces
     working_dir: /app
     command: npm run dev
     restart: unless-stopped
+
+volumes:
+  android_sdk:
+  flutter_cache:
