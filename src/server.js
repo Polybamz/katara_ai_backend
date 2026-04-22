@@ -1,6 +1,6 @@
 import githubRouter from "./routes/github/github.js";
 import modelroute from "./routes/ai-route/route.js";
-import attachGeminiWebsocket from "./websockets/gemini_ws.js";
+import attachGeminiWebsocket from "./websockets/ws.js";
 import userRouter from "./routes/user/user_route.js"
 import flutterRoute from './routes/flutter/flutter_route.js'
 import http from "http";

@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { callFunction } from "../../functions/call_function.js";
 import { LLMSchemas } from "../../functions/files_dir_function.js";
-
+import { systemInstruction, executorSystem, plannerSystem , fixerSystem, kataraCore} from "../../config/system_instruction.js";
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -13,25 +13,19 @@ function buildTools() {
     { type: "function", function: LLMSchemas.schema_write_file },
     { type: "function", function: LLMSchemas.schema_delete_directory },
     { type: "function", function: LLMSchemas.schema_delete_file },
+    { type: "function", function: LLMSchemas.schema_event_log }
   ];
 }
 
 export class AgentPipeline {
   // 🧠 Planner
-  static async plan(userPrompt) {
+  static async plan(userPrompt, onEvent = () => { },) {
     const response = await client.responses.create({
       model: "gpt-4.1",
       input: [
         {
           role: "system",
-          content: `You are a senior software architect.
-Return ONLY JSON:
-{
-  "framework": "...",
-  "steps": [],
-  "files": [],
-  "notes": ""
-}`,
+          content: plannerSystem + "\n\n" + kataraCore,
         },
         { role: "user", content: userPrompt },
       ],
@@ -41,11 +35,11 @@ Return ONLY JSON:
   }
 
   // ⚙️ Executor
-  static async execute(plan, workingDirectory, verboseFlag = false) {
+  static async execute(plan, workingDirectory, verboseFlag = false, onEvent = () => { },) {
     const messages = [
       {
         role: "system",
-        content: `Follow this plan exactly:\n${JSON.stringify(plan, null, 2)}`,
+        content: `${executorSystem}:\n${JSON.stringify(plan, null, 2)}` + "\n\n" + kataraCore,
       },
     ];
 
@@ -95,12 +89,16 @@ Return ONLY JSON:
   }
 
   // 🧪 Validator
-  static async validate(workingDirectory) {
+  static async validate(workingDirectory, onEvent = () => { },) {
     try {
       const result = await callFunction({
         name: "run_command",
         arguments: { command: "npm run build" },
-      });
+        
+      },
+
+    workingDirectory
+    );
 
       return { success: true, output: result };
     } catch (err) {
@@ -109,7 +107,7 @@ Return ONLY JSON:
   }
 
   // 🔧 Fixer
-  static async fix(error, workingDirectory, verboseFlag = false) {
+  static async fix(error, workingDirectory, verboseFlag = false, onEvent = () => { },) {
     const tools = buildTools();
 
     const response = await client.responses.create({
@@ -117,7 +115,7 @@ Return ONLY JSON:
       input: [
         {
           role: "system",
-          content: `Fix the project based on this error:\n${error}`,
+          content: `${fixerSystem}\n Error: ${error}`,
         },
       ],
       tools,
@@ -132,7 +130,6 @@ Return ONLY JSON:
           name: call.name,
           arguments: call.arguments,
         },
-        verboseFlag,
         workingDirectory
       );
     }
@@ -144,10 +141,11 @@ Return ONLY JSON:
 export async function createAppAgent(
   userPrompt,
   workingDirectory,
-  verboseFlag = false
+  verboseFlag = false,
+  onEvent = () => { },
 ) {
-  console.log("🧠 Planning...");
-  const plan = await AgentPipeline.plan(userPrompt);
+  onEvent("🧠 Planning...");
+  const plan = await AgentPipeline.plan(userPrompt, onEvent , );
 
   if (verboseFlag) {
     console.log("PLAN:", plan);
@@ -160,7 +158,7 @@ export async function createAppAgent(
 
   for (let i = 0; i < maxFixLoops; i++) {
     console.log("🧪 Validating...");
-    const result = await AgentPipeline.validate(workingDirectory);
+    const result = await AgentPipeline.validate(workingDirectory, onEvent);
 
     if (result.success) {
       console.log("✅ Build successful!");
@@ -168,7 +166,7 @@ export async function createAppAgent(
     }
 
     console.log("❌ Error detected. Fixing...");
-    await AgentPipeline.fix(result.error, workingDirectory, verboseFlag);
+    await AgentPipeline.fix(result.error, workingDirectory, verboseFlag, onEvent,);
   }
 
   throw new Error("Failed after multiple fix attempts");
