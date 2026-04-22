@@ -21,7 +21,7 @@ class GithubService {
   static generateId = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let id = "";
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 30; i++) {
       id += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return id;
@@ -31,47 +31,7 @@ class GithubService {
   // 1. CREATE PROJECT FROM TEMPLATE
   // ─────────────────────────────────────────────
 
-// static async createAppFromTemplate(type, appName) {
 
-//   if (!TEMPLATES[type]) {
-//     throw new Error(`Unsupported template type: ${type}`);
-//   }
-//   const id = this.generateId();
-//   const template = TEMPLATES[type];
-//   const projectId = `${appName}-${id}`;
-//   const target = path.join(WORKSPACE, projectId);
-//   try {
-    
-//     console.log("Using token:", token ? "Yes" : "No");
-//     const authedTemplate = token
-//       ? template.replace("https://", `https://${token}@`)
-//       : template;
-//     // 1. Clone template
-//     await simpleGit({
-//       env: {
-//         ...process.env,
-//         GIT_TERMINAL_PROMPT: "0"
-//       }
-//     }).clone(authedTemplate, target, ["--branch", "main"]);
-//     // 2. Remove template git history
-//     const gitDir = path.join(target, ".git");
-//     if (fs.existsSync(gitDir)) {
-//       fs.rmSync(gitDir, { recursive: true, force: true });
-//     }
-//     // 3. Fresh git
-//     const git = simpleGit(target);
-//     await git.init();
-//     // 4. Rename package / identifiers
-//     await this.replaceProjectName(target, appName);
-//     return {
-//       projectId,
-//       workingDir: target,
-//     };
-
-//   } catch (e) {
-//     throw e;
-//   }
-// }
 // ...existing code...
 static async createAppFromTemplate(type, appName) {
 
@@ -82,7 +42,7 @@ static async createAppFromTemplate(type, appName) {
   const template = TEMPLATES[type];
   const projectId = `${id}`;
   const target = path.join(WORKSPACE, projectId, appName);
-  console.log(target)
+  console.log(target, WORKSPACE, process.env.WORKSPACE )
   try {
     
     console.log("Using token:", token ? "Yes" : "No");
@@ -163,6 +123,7 @@ static async getFileContent(filePath) {
     const content = fs.readFileSync(fullPath, "utf-8");
     return content;
   } catch (e) {
+    console.log('error bbbbbbbbbbbbbbbbbbbbbb', e)
     throw e
   }
 }
@@ -308,8 +269,7 @@ static async getFileContent(filePath) {
   }
 
   // pull from github to local (future)
-  static async pullFromGithub(projectId, repoUrl) {
-    const projectPath = path.join(WORKSPACE, projectId);
+  static async pullFromGithub( repoUrl, projectPath) {
     try {
       const git = simpleGit(projectPath);
       await git.pull(repoUrl, "main");
@@ -318,6 +278,22 @@ static async getFileContent(filePath) {
       console.error("Pull failed:", e);
       throw e;
     }
+  }
+  // clode and sa
+  static async cloneToPath(repoUrl, workingDir){
+    try{
+      const target = workingDir.split("/")[0]+'/'+workingDir.split("/")[1]
+      const authedTemplate = token
+      ? repoUrl.replace("https://", `https://${token}@`)
+      : repoUrl;
+      // 1. Clone template
+    await simpleGit({
+      env: {
+        ...process.env,
+        GIT_TERMINAL_PROMPT: "0"
+      }
+    }).clone(authedTemplate, target, ["--branch", "main", "--depth", "1"]);
+    }catch(er){}
   }
 }
 

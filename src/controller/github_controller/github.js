@@ -6,19 +6,14 @@ class GithubController {
 
   static cloneTemplate = async (req, res) => {
     const { type, appName } = req.body;
-    console.log(type, appName)
     try {
       const result = await GithubService.createAppFromTemplate(type, appName)
       console.log("Template cloned to:", result.workingDir)
       console.log("Building file tree for:", result.projectId)
       // const tree = GithubController.buildTree(result.workingDir)
-      // console.log("File tree built successfully for:", result.projectId)
-      //const tree = GithubController.buildTree(result.workingDir);
-
       res.status(200).json({
         result,
        // tree
-
       })
     } catch (e) {
       res.status(404).json({ failed: true, error: e, message: 'Failed to clone template' })
@@ -71,7 +66,7 @@ class GithubController {
       });
       return tree;
   } catch (e) {
-    console.error("Failed to build file tree for", dir, e);
+    console.error("Failed to build file tree for", dir, e.message);
     throw new Error("Failed to build file tree: " + e.message);
   }
 };
@@ -87,6 +82,7 @@ static getFileContent = async (req, res) => {
       content
     })
   } catch (e) {
+    console.log('HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH',e)
     res.status(400).json({
       success: false,
       error: e.message

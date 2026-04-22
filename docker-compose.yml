@@ -37,11 +37,11 @@ services:
     environment:
       NODE_ENV: "production"
       ANDROID_HOME: "/usr/lib/android-sdk"
-      # WORKSPACE: "${WORKSPACE}"     # optional: use host .env values
       GITHUB_TOKEN: "${GITHUB_TOKEN}"
       GIT_USER_NAME: "${GIT_USER_NAME}"
       GIT_USER_EMAIL: "${GIT_USER_EMAIL}"
       GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
+      WORKSPACE: "/workspaces"           # <-- set workspace path as env var
     volumes:
       - ./:/app
       - android_sdk:/usr/lib/android-sdk

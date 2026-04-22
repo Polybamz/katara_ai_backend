@@ -27,12 +27,13 @@ class UserService {
             });
         } catch (error) {
             console.log(error);
-            return res.status(500).json({ 
+            return res.status(400).json({ 
                 message: 'Error creating user', 
                 error: error.message 
             });
         }
     }
+    // ==============================================
 
     static loginUser = async (email,password) => {
         try {
@@ -43,7 +44,7 @@ class UserService {
             }
             const data = await this.getUserById(userRecord.uid);
             const token = await admin.auth().createCustomToken(userRecord.uid);
-            return{ token: token, user: data };
+            return { token: token, user: data };
         } catch (error) {
             console.log(error);
             throw { message: 'Error logging in', error: error.message };
@@ -71,11 +72,28 @@ class UserService {
             return { message: 'User logged out successfully' };
         } catch (error) {
             console.log(error);
-            throw { message: 'Error logging out', error: error.message };
+            throw { ...error };
         }
     }
-    static getUserSubscription = async (uid) => {
-        const userDoc = await db.collection('u')
+    static addUserSubscription = async (uid, plan, token,start_date, end_date) => {
+        try {
+            const userDoc = await db.collection('subscription').doc(uid)
+            const subs = await userDoc.set({
+                uid,
+                plan,
+                token,
+                start_date,
+                end_date,
+                updatedAt: new Date().toISOString()
+            })
+        } catch (er){
+            throw {...er}
+        }
+    }
+
+    // user preference
+    static addPreference = (isSubscribed, token,  ) => {
+
     }
 }
 

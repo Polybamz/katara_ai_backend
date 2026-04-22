@@ -7,6 +7,7 @@ import simpleGit from "simple-git";
  const ANDROID_HOME = process.env.ANDROID_HOME || "/usr/lib/android-sdk"
  const FLUTTER_CMD = process.env.FLUTTER_BIN || "flutter"
  const WORKSPACE = process.env.WORKSPACE || "/workspaces"
+ const APPETIZE_API_TOKEN = process.env.APPETIZE_API_TOKEN ||  null
 
 function makeEnvForSdk() {
   const env = { ...process.env };
@@ -54,71 +55,61 @@ export class FlutterManager {
     this.github = ''//new Octokit({ auth: githubToken });
   }
    
- static async createApp(appName, parentPath = this.workspace, githubOpts = null) {
-  console.log(appName, parentPath,  FLUTTER_CMD,  ANDROID_HOME)
-  try {
-     if (!appName) throw  Error("appName:// required");
 
-    const targetPath = path.join(parentPath, appName);
-    if (fs.existsSync(targetPath)) throw  Error("target exists");
 
-    // 1️⃣ Create the Flutter app
-    const result = await runCmd(FLUTTER_CMD, ["create", appName], { cwd: parentPath });
+  static async pubGet(projectPath) {
+    try {
+          await runCmd(FLUTTER_CMD, ["pub", "get"], { cwd: projectPath });
 
-    // 2️⃣ If GitHub options are provided, push to GitHub
-    if (githubOpts) {
-      const { owner, repoName, privateRepo = false } = githubOpts;
-
-      // Create repo via GitHub API
-      await this.github.repos.createForAuthenticatedUser({
-        name: repoName || appName,
-        private: privateRepo
-      });
-
-      // Initialize Git and push
-      const git = simpleGit(targetPath);
-      await git.init();
-      await git.add(".");
-      await git.commit("Initial Flutter app commit");
-      await git.addRemote("origin", `https://github.com/${owner}/${repoName || appName}.git`);
-      await git.push("origin", "master");
-      await git.clone(`https://github.com/${owner}/${repoName || appName}.git`,)
+    } catch(er){
+      throw  er
     }
-
-    return result;
-  } catch (e){
-    console.error('kkkkkkkkkkkkkkkkkkk',e)
-  }
-   
   }
 
-  async pubGet(projectPath) {
-    if (!projectPath) throw  Error("projectPath required");
-    return await runCmd(FLUTTER_CMD, ["pub", "get"], { cwd: projectPath });
-  }
-
-  async build(projectPath, target = "apk") {
-    if (!projectPath) throw new Error("projectPath required");
-
+  static async buildAPK(projectPath, target = "apk") {
+    try {
+      if (!projectPath) throw new Error("projectPath required");
+      await this.pubGet(projectPath)
     const args = target === "appbundle" ? ["build", "appbundle"] : ["build", "apk"];
-    return await runCmd(FLUTTER_CMD, args, { cwd: projectPath });
+    const apk = await runCmd(FLUTTER_CMD, args, { cwd: projectPath });
+    console.log(apk)
+    const result = this.uploadAPk(projectPath)
+    return result
+    } catch(er){
+      console.log(er)
+      return 'Error: ' + er
+    }
+  }
+  static uploadAPk = async (projectPath, publicKey = null, platform = 'andriod') => {
+    try {
+      const apkFilePath = path.join(projectPath,'build', 'app','outputs', 'flutter-apk','app-release.apk')
+      const formData = new FormData()
+      formData.append('file', fs.createReadStream(apkFilePath));
+      formData.append('platform', platform)
+      const header = {
+        ...formData.getHeaders(),
+        "Authorization": `Bareer ${APPETIZE_API_TOKEN}`
+      }
+      let url;
+      if (publicKey) {
+        url = `https://api.appetize.io/v1/apps/${publicKey}`
+      } else {
+        url = `https://api.appetize.io/v1/apps`
+
+      }
+      const response = await axios.put(url, formData, { header })
+      const newPublicKey = response.data.publicKey;
+      const appUrl = `https://appetize.io/app/${newPublicKey}`
+      return {
+        publicKey: newPublicKey,
+        appUrl
+      }
+
+    } catch (e) {
+      throw e.message
+
+    }
   }
 
-  async run(projectPath, deviceId, mode = "debug", stream) {
-    if (!projectPath) throw new Error("projectPath required");
-
-    const args = ["run", `--${mode}`];
-    if (deviceId) args.push("-d", deviceId);
-
-    return await runCmd(FLUTTER_CMD, args, { cwd: projectPath, stream });
-  }
-
-  async adb(args = []) {
-    if (!Array.isArray(args)) throw new Error("args must be array");
-    return await runCmd("adb", args, {});
-  }
 }
  
-
-console.log('=================================================')
-console.log(FlutterManager.createApp( WORKSPACE, ''))

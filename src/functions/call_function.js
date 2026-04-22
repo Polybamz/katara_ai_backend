@@ -1,7 +1,8 @@
 
 import { FilingClass } from "./files_dir_function.js";
+import { FlutterManager } from "../services/flutter/flutter_ser.js";
 
- const workingDir = process.env.WORKING_DIRECTORY || process.env.WORKSPACE || "workspaces";
+ const workingDir = process.env.WORKSPACE || "/workspaces";
 
 function coerceToString(v) {
   if (v == null) return "";
@@ -64,8 +65,8 @@ export async function callFunction(functionCall, verbose = false, workingDirecto
         break;
       }
 
-      case "run_python_file": {
-        result = { error: "run_python_file not implemented" };
+      case "build_apk": { 
+        result = FlutterManager.buildAPK(workingDirectory);
         break;
       }
       case "delete_file": {

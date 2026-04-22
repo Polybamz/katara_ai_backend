@@ -1,13 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-// import {  WORKSPACE } from "../config/config.js";
 
-// const WORKSPACE_DIR = WORKSPACE || process.env.WORKING_DIRECTORY || "workspace";
-import simpleGit from "simple-git";
 
-const ANDROID_HOME =  process.env.ANDROID_HOME || "/usr/lib/android-sdk"
-const FLUTTER_CMD =  process.env.FLUTTER_BIN || "flutter"
+const ANDROID_HOME = process.env.ANDROID_HOME || "/usr/lib/android-sdk"
+const FLUTTER_CMD = process.env.FLUTTER_BIN || "flutter"
 const WORKSPACE = process.env.WORKSPACE || "/workspaces"
 function makeEnvForSdk() {
   const env = { ...process.env };
@@ -125,7 +122,7 @@ class FilingClass {
     }
   };
 
-  static generate_apk = (file_path) => {};
+
   // delete a file
   static delete_file = (working_directory, file_path) => {
     const absWorkingDir = FilingClass._resolveWorkingDir(working_directory);
@@ -148,208 +145,25 @@ class FilingClass {
       return { success: true, dir_path };
     } catch (e) {
       return { error: e.message };
-    }}
+    }
+  }
 
-    /// install flutter pub dependencies
-    static install_flutter_dependencies = (working_directory) => {
-      const absWorkingDir = FilingClass._resolveWorkingDir(working_directory);
-      try {
-        const result = spawnSync(FLUTTER_CMD, ["pub", "get"], {
-          cwd: absWorkingDir,
-          env: makeEnvForSdk(),
-          stdio: "inherit",
-        });
-        if (result.error) return { error: result.error.message };
-        return { success: true };
-      } catch (e) {
-        return { error: e.message };
-      }
-    };
+  /// install flutter pub dependencies
+  static install_flutter_dependencies = (working_directory) => {
+    const absWorkingDir = FilingClass._resolveWorkingDir(working_directory);
+    try {
+      const result = spawnSync(FLUTTER_CMD, ["pub", "get"], {
+        cwd: absWorkingDir,
+        env: makeEnvForSdk(),
+        stdio: "inherit",
+      });
+      if (result.error) return { error: result.error.message };
+      return { success: true };
+    } catch (e) {
+      return { error: e.message };
+    }
+  };
 }
-// ...existing code...
-
-// class FilingClass {
-//   static get_file_info = (working_directory, directory) => {
-//     const absWorkingDir = path.resolve(working_directory);
-//     const absDirPath = path.resolve(working_directory, directory);
-
-//     if (!absDirPath.startsWith(absWorkingDir)) {
-//       return { error: "Directory is outside the working directory" };
-//     }
-
-//     if (!fs.existsSync(absDirPath)) {
-//       return { error: "Directory does not exist" };
-//     }
-
-//     try {
-//       const items = fs.readdirSync(absDirPath, { withFileTypes: true });
-
-//       return items.map((item) => ({
-//         name: item.name,
-//         type: item.isDirectory() ? "directory" : "file",
-//       }));
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-//   };
-
-//   static get_file_content = (working_directory, file_path) => {
-//     const absWorkingDir = path.resolve(working_directory);
-//     const absFilePath = path.resolve(working_directory, file_path);
-
-//     if (!absFilePath.startsWith(absWorkingDir)) {
-//       return { error: "File is outside the working directory" };
-//     }
-
-//     if (!fs.existsSync(absFilePath)) {
-//       return { error: "File does not exist" };
-//     }
-
-//     try {
-//       const content = fs.readFileSync(absFilePath, "utf8");
-//       return { content };
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-//   };
-
-//   static write_file = (working_directory, file_path, content) => {
-//     const absWorkingDir = path.resolve(working_directory);
-//     const absFilePath = path.resolve(working_directory, file_path);
-
-//     if (!absFilePath.startsWith(absWorkingDir)) {
-//       return { error: "File path is outside the working directory" };
-//     }
-
-//     const parentDir = path.dirname(absFilePath);
-
-//     try {
-//       if (!fs.existsSync(parentDir)) {
-//         fs.mkdirSync(parentDir, { recursive: true });
-//       }
-
-//       fs.writeFileSync(absFilePath, content, "utf8");
-
-//       return {
-//         success: true,
-//         file_path,
-//         characters_written: content.length,
-//       };
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-//   };
-
-//   // CREATE FLUTTER APP IN THE WORKSPACE IN THE DOCKER CONTAINER
-//   static create_flutter_app = (working_directory, app_name) => {
-//     const absWorkingDir = path.resolve(working_directory);
-//     const absAppDir = path.resolve(working_directory, app_name);
-
-//     if (!absAppDir.startsWith(absWorkingDir)) {
-//       return { error: "App directory is outside the working directory" };
-//     }
-
-//     try {
-//       const result = spawnSync(
-//         "flutter",
-//         ["create", "--project-name", app_name],
-//         {
-//           cwd: absWorkingDir,
-//           stdio: "inherit",
-//         }
-//       );
-
-//         if (result.error) {
-//           return { error: result.error.message };
-//         }
-
-//         return { success: true };
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-// }
-// /// generate apk
-//  static generate_apk = (file_path) =>{}
-  
-// }
-
-// class FilingClass {
-//   static BASE_DIR = process.env.WORKSPACE_DIR || 'workspaces';
-
-//   static resolveSafe(working_directory, target) {
-//     const base = path.resolve(working_directory || this.BASE_DIR);
-//     const resolved = path.resolve(base, target);
-      
-//     if (!resolved.startsWith(base)) {
-//       return { error: "Path traversal blocked" };
-//     }
-
-//     return resolved;
-//   }
-
-//   static get_file_info = (working_directory, directory) => {
-//     console.log("Getting file info for directory:", directory);
-//     console.log("Working directory:", working_directory);
-//     const absDirPath = this.resolveSafe(working_directory, directory);
-//     if (absDirPath.error) return absDirPath;
-//     console.log("Absolute directory path:", absDirPath);
-//     if (!fs.existsSync(absDirPath)) {
-//       console.log("Directory does not exist:", absDirPath);
-//       // create directory
-      
-//       return { error: "Directory does not exist" };
-//     }
-//   console.log("Directory exists. Reading contents...");
-//     try {
-//       const items = fs.readdirSync(absDirPath, { withFileTypes: true });
-
-//       return items.map((item) => ({
-//         name: item.name,
-//         type: item.isDirectory() ? "directory" : "file",
-//       }));
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-//   };
-
-//   static get_file_content = (working_directory, file_path) => {
-//     const absFilePath = this.resolveSafe(working_directory, file_path);
-//     if (absFilePath.error) return absFilePath;
-
-//     if (!fs.existsSync(absFilePath)) {
-//       return { error: "File does not exist" };
-//     }
-
-//     try {
-//       return { content: fs.readFileSync(absFilePath, "utf8") };
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-//   };
-
-//   static write_file = (working_directory, file_path, content) => {
-//     const absFilePath = this.resolveSafe(working_directory, file_path);
-//     if (absFilePath.error) return absFilePath;
-
-//     const parentDir = path.dirname(absFilePath);
-
-//     try {
-//       if (!fs.existsSync(parentDir)) {
-//         fs.mkdirSync(parentDir, { recursive: true });
-//       }
-
-//       fs.writeFileSync(absFilePath, content, "utf8");
-
-//       return {
-//         success: true,
-//         file_path,
-//         characters_written: content.length,
-//       };
-//     } catch (e) {
-//       return { error: e.message };
-//     }
-//   };
-// }
 
 
 class LLMSchemas {
@@ -437,6 +251,36 @@ class LLMSchemas {
       required: ["dir_path"],
     },
   };
+  static  schema_event_log = {
+  name: "event_log",
+  description:
+    "Send event to the UI, update user on what the model is currently working on e.g Searching, Creating file main.dart, Updating file main.dart etc",
+  parameters: {
+    type: "object",
+    properties: {
+      log: {
+        type: "string",
+        description: "Event update",
+      },
+    },
+    required: ["log"],
+  },
+};
+
+static schema_build_apk = {
+  name: "build_apk",
+  description: "Trigger APK build for the flutter project",
+  parameters: {
+    type: "object",
+    properties: {
+      flavor: { type: "string", description: "Optional build flavor" },
+      buildMode: { type: "string", description: "e.g. release or debug" },
+    },
+    required: [],
+  },
+}
+
+
 
 
 }

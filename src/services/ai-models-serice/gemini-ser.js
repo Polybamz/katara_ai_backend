@@ -4,9 +4,7 @@ import process from "process";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { systemInstruction } from "../../config/system_instruction.js";
-// import { log, info, warn, error, progress } from "../../../utils/logger.js";
-
-// Tool router + schemas
+import { FlutterManager } from "../flutter/flutter_ser.js";
 import { callFunction } from "../../functions/call_function.js";
 import { LLMSchemas } from "../../functions/files_dir_function.js";
 
@@ -24,7 +22,7 @@ async function createGeminiChat(prompt, verboseFlag = false, workingDirectory) {
   }
 
   console.log("Gemini API Key:", geminiApiKey);
-  console.log('Promt: ',prompt, ',\n -- verbose: ', verboseFlag)
+  console.log('Promt: ', prompt, ',\n -- verbose: ', verboseFlag)
   // console.log(systemInstruction)
 
   const systemPrompt = systemInstruction || `
@@ -38,14 +36,6 @@ When a user asks a question or makes a request, make a function call plan. You c
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 `;
-
-  // if (process.argv.length < 3) {
-  //   console.error("You need a prompt");
-  //   process.exit(1);
-  // }
-
-  // const prompt = process.argv[2];
-  // const verboseFlag = process.argv.includes("--verbose");
 
   // Initialize Gemini
   const genAI = new GoogleGenerativeAI(geminiApiKey);
@@ -79,9 +69,7 @@ All paths you provide should be relative to the working directory. You do not ne
   for (let i = 0; i < maxIters; i++) {
     const result = await model.generateContent({
       contents: messages,
-      // generationConfig:{
-      //   thinkingFlag:true
-      // }
+
     });
 
     const response = result.response;
@@ -119,7 +107,7 @@ All paths you provide should be relative to the working directory. You do not ne
 
         const toolResult = await callFunction(
           part.functionCall,
-          verboseFlag, 
+          verboseFlag,
           workingDirectory
         );
 
@@ -144,7 +132,7 @@ All paths you provide should be relative to the working directory. You do not ne
     // No tools called → final answer
     if (!functionCalled) {
       console.log(response.text());
-      return response.text() ;
+      return response.text();
     }
   }
 }
@@ -153,19 +141,12 @@ All paths you provide should be relative to the working directory. You do not ne
 
 
 
-async function createStreamChat(prompt, verboseFlag = false, workingDirectory, onEvent = () => {}, onError = () => {}, onEnd = () => {}, onData = () => {}, onResult = () => {}, onProgress = () => {}) {
+async function createStreamChat(prompt, verboseFlag = false, workingDirectory, onEvent = () => { }, onError = () => { }, onEnd = () => { }, onData = () => { }, onResult = () => { }, onProgress = () => { }) {
   const geminiApiKey = process.env.GOOGLE_GENAI_API_KEY;
 
 
-  if (!geminiApiKey) {
-    onError("Missing GOOGLE_GENAI_API_KEY");
-    return;
-  }
-
   console.log("Gemini API Key:", geminiApiKey);
-  console.log('Promt: ',prompt, ',\n -- verbose: ', verboseFlag)
-  // console.log(systemInstruction)
-
+  console.log('Promt: ', prompt, ',\n -- verbose: ', verboseFlag)
   const systemPrompt = systemInstruction || `
 You are a helpful AI coding agent.
 
@@ -178,7 +159,7 @@ When a user asks a question or makes a request, make a function call plan. You c
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 `;
 
-  
+
   const genAI = new GoogleGenerativeAI(geminiApiKey);
 
   const model = genAI.getGenerativeModel({
@@ -191,6 +172,8 @@ All paths you provide should be relative to the working directory. You do not ne
           LLMSchemas.schema_write_file,
           LLMSchemas.schema_delete_directory,
           LLMSchemas.schema_delete_file,
+          LLMSchemas.schema_event_log,
+          LLMSchemas.schema_build_apk
         ],
       },
     ],
@@ -205,14 +188,12 @@ All paths you provide should be relative to the working directory. You do not ne
     },
   ];
 
-  const maxIters = 20;
+  const maxIters = 10;
 
   for (let i = 0; i < maxIters; i++) {
     const result = await model.generateContent({
       contents: messages,
-      generationConfig:{
-        thinkingFlag:true
-      }
+
     });
 
     const response = result.response;
@@ -224,8 +205,8 @@ All paths you provide should be relative to the working directory. You do not ne
 
     if (verboseFlag) {
       // info("User prompt:", prompt)
-      onEvent({ type: "log", message: "User prompt: " + prompt });
-      onEvent({ type: "log", message: "Generated text: " + response.text() });
+      onEvent("User prompt: " + prompt);
+      onEvent("Generated text: " + response.text());
     }
 
     // Append model message to history
@@ -246,17 +227,57 @@ All paths you provide should be relative to the working directory. You do not ne
     for (const part of parts) {
       if (part.functionCall) {
         functionCalled = true;
+        if (part.functionCall.name == 'event_log') {
+          console.log(part.functionCall.anme,`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`)
+          console.log(part.functionCall)
+          let args = part.functionCall.arguments ?? part.functionCall.args ?? {};
+          if (typeof args === "string") {
+            try {
+              args = JSON.parse(args);
+            } catch (e) {
+              // leave as-is string; will coerce below
+              args = { value: args };
+            }
+          }
+          onEvent(args.log)
 
+        }
+        if (part.functionCall.name == 'build_apk') {
+          try {
+            const result = await FlutterManager.buildAPK(workingDirectory)
+            onData(result)
+            messages.push({
+              role: "tool",
+              parts: [
+                {
+                  functionResponse: {
+                    name: part.functionCall.name,
+                    response: result,
+                  },
+                },
+              ],
+            });
+          } catch (e) {
+            maxIters += 1
+            messages.push({
+              role: "tool",
+              parts: [
+                {
+                  functionResponse: {
+                    name: part.functionCall.name,
+                    response: e,
+                  },
+                },
+              ],
+            });
+
+          }
+        }
         const toolResult = await callFunction(
           part.functionCall,
-          verboseFlag, 
+          verboseFlag,
           workingDirectory
         );
-
-        if (verboseFlag) {
-          onEvent({ type: "log", message: "Tool result: " + JSON.stringify(toolResult) });
-          // console.log("Tool result:", toolResult);
-        }
 
         messages.push({
           role: "tool",
@@ -275,8 +296,8 @@ All paths you provide should be relative to the working directory. You do not ne
     // No tools called → final answer
     if (!functionCalled) {
       console.log(response.text());
-      onResult(response.text());
-      // return response.text() ;
+      // onResult(response.text());
+      return response.text();
     }
   }
 }
