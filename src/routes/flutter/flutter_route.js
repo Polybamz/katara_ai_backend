@@ -1,6 +1,6 @@
-import FlutterContrpller from "../../controller/flutter_controller/flutter";
+import FlutterController from "../../controller/flutter_controller/flutter.js";
 import express from "express";
 
 const router = express.Router();
 
-router.post('/build_apk/:projectPath', FlutterContrpller.build())
+router.post('/build_apk/:projectPath', FlutterController.build())

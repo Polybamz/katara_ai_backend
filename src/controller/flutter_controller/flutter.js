@@ -1,8 +1,8 @@
-import { FlutterManager } from "../../services/flutter/flutter_ser";
+import { FlutterManager } from "../../services/flutter/flutter_ser.js";
 
 
-class FlutterContrpller {
- 
+class FlutterController {
+
     /// flutter pub get
     static pubGet = async (req, res) => {
         const {projectPath} = req.params
@@ -35,4 +35,4 @@ class FlutterContrpller {
 
     }
 }
-export default FlutterContrpller;
+export default FlutterController;
