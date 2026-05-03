@@ -2,7 +2,7 @@ import githubRouter from "./routes/github/github.js";
 import modelroute from "./routes/ai-route/route.js";
 import attachGeminiWebsocket from "./websockets/ws.js";
 // import userRouter from "./routes/user/user_route.js"
-import flutterRoute from './routes/flutter/flutter_route.js'
+// import flutterRoute from './routes/flutter/flutter_route.js'
 import http from "http";
 import express from 'express';
 import cors from 'cors';
@@ -36,7 +36,7 @@ app.use("/api/v1/github", (req, res, next) => {
 }, githubRouter);
 app.use("/api/v1/ai", modelroute);
 // app.use('/api/v1/user', userRouter);
-app.use('/api/v1/flutter', flutterRoute)
+// app.use('/api/v1/flutter', flutterRoute)
 
 const server = http.createServer(app);
 attachGeminiWebsocket(server, { path: "/ws/gemini" });
